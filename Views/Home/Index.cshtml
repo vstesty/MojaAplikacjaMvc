@@ -3,37 +3,349 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hello, World!</title>
+    <title>Scheduler — planowanie wydarzeń</title>
     <style>
-        body {
-            align-items: center;
-            background: #f3f4f6;
-            color: #1f2937;
+        :root {
+            color-scheme: light;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #333;
+            background: #f4f4f4;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; min-width: 360px; }
+        button, select, input { font: inherit; }
+        .app { max-width: 1500px; margin: 18px auto; padding: 0 16px; }
+        .toolbar {
             display: flex;
-            font-family: system-ui, sans-serif;
-            justify-content: center;
-            margin: 0;
-            min-height: 100vh;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #bbb;
+            border-bottom: 0;
         }
-
-        main {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgb(0 0 0 / 8%);
-            padding: 3rem;
-            text-align: center;
+        .brand { font-weight: 700; color: #fff; background: #202633; padding: 7px 10px; }
+        .toolbar-actions { display: flex; align-items: center; gap: 8px; }
+        .toolbar button {
+            border: 1px solid #bbb;
+            background: #f8f8f8;
+            border-radius: 3px;
+            padding: 6px 10px;
+            cursor: pointer;
         }
+        .toolbar button:hover { background: #e9f2f8; }
+        #monthLabel { min-width: 145px; text-align: center; font-weight: 600; }
+        .scroll-frame { overflow: auto; border: 1px solid #aaa; background: #fff; }
+        #scheduler { min-width: max-content; }
+        .grid-row {
+            display: grid;
+            grid-template-columns: 220px repeat(var(--days), 60px);
+            width: max-content;
+        }
+        .corner, .day-head, .resource, .group-name, .welcome-label, .welcome {
+            min-height: 28px;
+            border-right: 1px solid #bbb;
+            border-bottom: 1px solid #ccc;
+        }
+        .corner { background: #eee; }
+        .day-head { background: #eee; text-align: center; padding: 5px 2px; color: #444; }
+        .welcome-label { background: #f3f3f3; }
+        .welcome {
+            grid-column: 2 / -1;
+            padding: 8px 10px;
+            min-height: 36px;
+            color: #fff;
+            font-weight: 700;
+            background: #ffa726;
+        }
+        .group-name {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            background: #f2f2f2;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .group-name::before { content: '⊟'; font-size: 15px; color: #555; }
+        .group-name.collapsed::before { content: '⊞'; }
+        .group-fill { grid-column: 2 / -1; background: #f2f2f2; border-bottom: 1px solid #ccc; }
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 4px 8px 4px 27px;
+            min-height: 38px;
+            background: #fafafa;
+            color: #444;
+            font-size: 13px;
+        }
+        .resource::before { content: ''; width: 9px; height: 9px; border: 1px solid #777; background: white; }
+        .timeline {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(var(--days), 60px);
+            min-height: 38px;
+            background: repeating-linear-gradient(to right, transparent 0, transparent 59px, #ddd 59px, #ddd 60px), #fff;
+            border-bottom: 1px solid #ccc;
+        }
+        .timeline:hover { background-color: #fcfdff; }
+        .event {
+            align-self: stretch;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            min-width: 0;
+            margin: 2px 0;
+            padding: 4px 5px;
+            overflow: hidden;
+            border-top: 3px solid #75b8e7;
+            background: #dceefa;
+            color: #34516a;
+            font-size: 12px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .event:hover { filter: brightness(.96); z-index: 2; }
+        .event.orange { background: #fff0cf; border-color: #efaa42; }
+        .event.green { background: #dff2e2; border-color: #69b578; }
+        .empty-cell { grid-row: 1; min-height: 38px; cursor: crosshair; }
+        .empty-cell:hover { background: rgb(105 173 222 / 13%); }
+        .hint { margin: 8px 2px; color: #666; font-size: 12px; }
+        dialog { width: min(440px, calc(100% - 28px)); border: 0; border-radius: 8px; padding: 22px; box-shadow: 0 12px 40px #0004; }
+        dialog::backdrop { background: #0006; }
+        dialog h2 { margin: 0 0 16px; font-size: 20px; }
+        .form-field { display: grid; gap: 6px; margin: 12px 0; }
+        .form-field input, .form-field select { padding: 8px; border: 1px solid #aaa; border-radius: 4px; }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+        .dialog-actions button { padding: 8px 12px; border: 1px solid #aaa; border-radius: 4px; background: #f7f7f7; cursor: pointer; }
+        .dialog-actions .primary { color: white; background: #2563a6; border-color: #2563a6; }
 
-        h1 {
-            color: #2563eb;
-            margin: 0 0 0.5rem;
+        @@media (max-width: 600px) {
+            .app { margin: 8px auto; padding: 0 8px; }
+            .toolbar { align-items: flex-start; flex-direction: column; }
+            .toolbar-actions { width: 100%; justify-content: space-between; }
+            .grid-row { grid-template-columns: 160px repeat(var(--days), 54px); }
+            .timeline { grid-template-columns: repeat(var(--days), 54px); background-size: 54px 100%; }
         }
     </style>
 </head>
 <body>
-    <main>
-        <h1>Hello, World!</h1>
-        <p>Witaj w mojej prostej aplikacji MVC.</p>
+    <main class="app">
+        <header class="toolbar">
+            <div class="brand">asp.net mvc scheduler</div>
+            <div class="toolbar-actions" aria-label="Nawigacja kalendarza">
+                <button id="previousMonth" type="button" aria-label="Poprzedni miesiąc">‹</button>
+                <span id="monthLabel" aria-live="polite"></span>
+                <button id="nextMonth" type="button" aria-label="Następny miesiąc">›</button>
+                <button id="todayButton" type="button">Dzisiaj</button>
+                <button id="addEventButton" type="button">+ Dodaj wydarzenie</button>
+            </div>
+        </header>
+        <div class="scroll-frame">
+            <div id="scheduler" aria-label="Kalendarz wydarzeń"></div>
+        </div>
+        <p class="hint">Kliknij wolne pole, aby dodać wydarzenie. Kliknij wydarzenie, aby zobaczyć szczegóły. Przewijaj poziomo, aby zobaczyć kolejne dni.</p>
     </main>
+
+    <dialog id="eventDialog">
+        <form id="eventForm">
+            <h2>Dodaj wydarzenie</h2>
+            <label class="form-field">Nazwa wydarzenia
+                <input id="eventTitle" name="title" required maxlength="60" placeholder="Np. Spotkanie zespołu" />
+            </label>
+            <label class="form-field">Zasób
+                <select id="eventResource" name="resource"></select>
+            </label>
+            <label class="form-field">Data
+                <input id="eventDate" name="date" type="date" required />
+            </label>
+            <label class="form-field">Liczba dni
+                <input id="eventDuration" name="duration" type="number" min="1" max="31" value="1" required />
+            </label>
+            <div class="dialog-actions">
+                <button id="cancelEvent" type="button">Anuluj</button>
+                <button class="primary" type="submit">Zapisz wydarzenie</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        (() => {
+            const resources = [
+                { id: 'room1', name: 'Room 1', group: 'Locations' },
+                { id: 'room2', name: 'Room 2', group: 'Locations' },
+                { id: 'room3', name: 'Room 3', group: 'Locations' },
+                { id: 'room4', name: 'Room 4', group: 'Locations' },
+                { id: 'person1', name: 'Person 1', group: 'People' },
+                { id: 'person2', name: 'Person 2', group: 'People' },
+                { id: 'person3', name: 'Person 3', group: 'People' },
+                { id: 'person4', name: 'Person 4', group: 'People' }
+            ];
+            let events = [
+                { resource: 'room1', day: 2, span: 2, title: 'Event 1' },
+                { resource: 'room1', day: 4, span: 3, title: 'Event 15', color: 'orange' },
+                { resource: 'room2', day: 2, span: 2, title: 'Event 2' },
+                { resource: 'room2', day: 4, span: 2, title: 'Event 16' },
+                { resource: 'room3', day: 4, span: 2, title: 'Event 3' },
+                { resource: 'room3', day: 6, span: 2, title: 'Event 17', color: 'green' },
+                { resource: 'room4', day: 2, span: 2, title: 'Sales Department' },
+                { resource: 'person1', day: 2, span: 2, title: 'Event 4' },
+                { resource: 'person2', day: 2, span: 2, title: 'Event 6' },
+                { resource: 'person3', day: 1, span: 2, title: 'Event 8' },
+                { resource: 'person4', day: 29, span: 2, title: 'Event 9' }
+            ];
+            let visibleMonth = new Date();
+            const scheduler = document.getElementById('scheduler');
+            const monthLabel = document.getElementById('monthLabel');
+            const dialog = document.getElementById('eventDialog');
+            const form = document.getElementById('eventForm');
+            const dateInput = document.getElementById('eventDate');
+            const resourceSelect = document.getElementById('eventResource');
+            const collapsedGroups = new Set();
+
+            resources.forEach(resource => {
+                const option = document.createElement('option');
+                option.value = resource.id;
+                option.textContent = `${resource.group} — ${resource.name}`;
+                resourceSelect.append(option);
+            });
+
+            function render() {
+                const year = visibleMonth.getFullYear();
+                const month = visibleMonth.getMonth();
+                const days = new Date(year, month + 1, 0).getDate();
+                const monthName = new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric' }).format(visibleMonth);
+                monthLabel.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+                scheduler.style.setProperty('--days', days);
+                scheduler.replaceChildren();
+
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'grid-row';
+                dayHeader.innerHTML = '<div class="corner" aria-hidden="true"></div>';
+                for (let day = 1; day <= days; day++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'day-head';
+                    cell.textContent = day;
+                    dayHeader.append(cell);
+                }
+                scheduler.append(dayHeader);
+
+                const welcome = document.createElement('div');
+                welcome.className = 'grid-row';
+                welcome.innerHTML = '<div class="welcome-label"></div><div class="welcome">Welcome!</div>';
+                scheduler.append(welcome);
+
+                let currentGroup = '';
+                resources.forEach(resource => {
+                    if (resource.group !== currentGroup) {
+                        currentGroup = resource.group;
+                        const groupRow = document.createElement('div');
+                        groupRow.className = 'grid-row';
+                        const groupName = document.createElement('div');
+                        groupName.className = `group-name${collapsedGroups.has(currentGroup) ? ' collapsed' : ''}`;
+                        groupName.textContent = currentGroup;
+                        groupName.setAttribute('role', 'button');
+                        groupName.tabIndex = 0;
+                        groupName.setAttribute('aria-expanded', String(!collapsedGroups.has(currentGroup)));
+                        groupName.addEventListener('click', () => toggleGroup(currentGroup));
+                        groupName.addEventListener('keydown', event => {
+                            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleGroup(currentGroup); }
+                        });
+                        const fill = document.createElement('div');
+                        fill.className = 'group-fill';
+                        groupRow.append(groupName, fill);
+                        scheduler.append(groupRow);
+                    }
+                    if (collapsedGroups.has(resource.group)) return;
+
+                    const row = document.createElement('div');
+                    row.className = 'grid-row';
+                    const label = document.createElement('div');
+                    label.className = 'resource';
+                    label.textContent = resource.name;
+                    const timeline = document.createElement('div');
+                    timeline.className = 'timeline';
+                    timeline.style.gridTemplateColumns = `repeat(${days}, 60px)`;
+                    timeline.setAttribute('aria-label', `${resource.name}, ${monthName}`);
+
+                    for (let day = 1; day <= days; day++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'empty-cell';
+                        cell.style.gridColumn = String(day);
+                        cell.title = `Dodaj wydarzenie: ${resource.name}, ${day} ${monthName}`;
+                        cell.addEventListener('dblclick', () => openDialog(resource.id, day));
+                        timeline.append(cell);
+                    }
+                    events.filter(item => item.resource === resource.id && item.day <= days).forEach(item => {
+                        const event = document.createElement('button');
+                        event.type = 'button';
+                        event.className = `event${item.color ? ` ${item.color}` : ''}`;
+                        event.style.gridColumn = `${item.day} / ${Math.min(days + 1, item.day + item.span)}`;
+                        event.textContent = item.title;
+                        event.title = `${item.title} — ${resource.name}, dzień ${item.day}`;
+                        event.setAttribute('aria-label', event.title);
+                        event.addEventListener('click', () => window.alert(`${item.title}\n${resource.name}\nDzień ${item.day}`));
+                        timeline.append(event);
+                    });
+                    row.append(label, timeline);
+                    scheduler.append(row);
+                });
+            }
+
+            function toggleGroup(group) {
+                if (collapsedGroups.has(group)) collapsedGroups.delete(group);
+                else collapsedGroups.add(group);
+                render();
+            }
+
+            function openDialog(resourceId, day) {
+                const year = visibleMonth.getFullYear();
+                const month = String(visibleMonth.getMonth() + 1).padStart(2, '0');
+                const selectedDay = String(day || 1).padStart(2, '0');
+                dateInput.value = `${year}-${month}-${selectedDay}`;
+                if (resourceId) resourceSelect.value = resourceId;
+                form.reset();
+                dateInput.value = `${year}-${month}-${selectedDay}`;
+                if (resourceId) resourceSelect.value = resourceId;
+                document.getElementById('eventDuration').value = 1;
+                dialog.showModal();
+                document.getElementById('eventTitle').focus();
+            }
+
+            document.getElementById('previousMonth').addEventListener('click', () => {
+                visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
+                render();
+            });
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
+                render();
+            });
+            document.getElementById('todayButton').addEventListener('click', () => {
+                visibleMonth = new Date();
+                render();
+            });
+            document.getElementById('addEventButton').addEventListener('click', () => openDialog(null, 1));
+            document.getElementById('cancelEvent').addEventListener('click', () => dialog.close());
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                const selectedDate = new Date(`${dateInput.value}T00:00:00`);
+                if (Number.isNaN(selectedDate.getTime())) return;
+                const day = selectedDate.getDate();
+                const duration = Math.max(1, Number(document.getElementById('eventDuration').value) || 1);
+                events.push({ resource: resourceSelect.value, day, span: duration, title: document.getElementById('eventTitle').value.trim() });
+                visibleMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                dialog.close();
+                render();
+            });
+
+            render();
+        })();
+    </script>
 </body>
 </html>
