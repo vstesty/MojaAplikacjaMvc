@@ -1,0 +1,5 @@
+/workspaces/MojaAplikacjaMvc/bin/Release/net8.0/publish/MojaAplikacjaMvc
+/workspaces/MojaAplikacjaMvc/bin/Release/net8.0/publish/MojaAplikacjaMvc.dll
+/workspaces/MojaAplikacjaMvc/bin/Release/net8.0/publish/MojaAplikacjaMvc.deps.json
+/workspaces/MojaAplikacjaMvc/bin/Release/net8.0/publish/MojaAplikacjaMvc.runtimeconfig.json
+/workspaces/MojaAplikacjaMvc/bin/Release/net8.0/publish/MojaAplikacjaMvc.pdb
