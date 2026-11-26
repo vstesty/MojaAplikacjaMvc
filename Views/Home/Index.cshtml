@@ -27,7 +27,7 @@
             border-bottom: 0;
         }
         .brand { font-weight: 700; color: #fff; background: #202633; padding: 7px 10px; }
-        .toolbar-actions { display: flex; align-items: center; gap: 8px; }
+        .toolbar-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
         .toolbar button {
             border: 1px solid #bbb;
             background: #f8f8f8;
@@ -37,65 +37,109 @@
         }
         .toolbar button:hover { background: #e9f2f8; }
         #monthLabel { min-width: 145px; text-align: center; font-weight: 600; }
+        .view-control { display: flex; align-items: center; gap: 5px; color: #444; font-size: 12px; white-space: nowrap; }
+        .view-control input[type="range"] { width: 90px; }
+        .view-control output { min-width: 64px; }
         .scroll-frame { overflow: auto; border: 1px solid #aaa; background: #fff; }
         #scheduler { min-width: max-content; }
         .grid-row {
             display: grid;
-            grid-template-columns: 220px repeat(var(--days), 60px);
+            grid-template-columns: 220px repeat(var(--total-days), var(--day-width));
             width: max-content;
         }
-        .corner, .day-head, .resource, .group-name, .welcome-label, .welcome {
+        .corner, .day-head, .project-heading, .person-label, .group-name {
             min-height: 28px;
             border-right: 1px solid #bbb;
             border-bottom: 1px solid #ccc;
         }
         .corner { background: #eee; }
-        .day-head { background: #eee; text-align: center; padding: 5px 2px; color: #444; }
-        .welcome-label { background: #f3f3f3; }
-        .welcome {
-            grid-column: 2 / -1;
-            padding: 8px 10px;
-            min-height: 36px;
-            color: #fff;
-            font-weight: 700;
-            background: #ffa726;
-        }
+        .month-head { background: #e5e5e5; text-align: center; padding: 6px 2px; color: #333; font-weight: 600; border-left: 1px solid #aaa; }
+        .day-head { background: #eee; text-align: center; padding: 5px 1px; color: #444; }
         .group-name {
             display: flex;
             align-items: center;
             gap: 5px;
-            padding: 4px 8px;
+            padding: 4px 6px 4px 8px;
             background: #f2f2f2;
             font-size: 13px;
             font-weight: 600;
+        }
+        .group-toggle {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            gap: 5px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            font-weight: 600;
             cursor: pointer;
         }
-        .group-name::before { content: '⊟'; font-size: 15px; color: #555; }
-        .group-name.collapsed::before { content: '⊞'; }
+        .group-toggle::before { content: '⊟'; font-size: 15px; color: #555; }
+        .group-toggle.collapsed::before { content: '⊞'; }
         .group-fill { grid-column: 2 / -1; background: #f2f2f2; border-bottom: 1px solid #ccc; }
-        .resource {
+        .project-heading {
             display: flex;
             align-items: center;
-            gap: 7px;
-            padding: 4px 8px 4px 27px;
+            gap: 4px;
+            padding: 3px 5px;
+            background: #e9e9e9;
+            font-size: 12px;
+        }
+        .project-fill { grid-column: 2 / -1; background: #e9e9e9; border-bottom: 1px solid #ccc; }
+        .project-toggle {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+            padding: 2px;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .project-toggle::before { content: '⊟'; font-size: 15px; color: #555; }
+        .project-toggle.collapsed::before { content: '⊞'; }
+        .entity-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 3px; }
+        .icon-button {
+            border: 1px solid #aaa;
+            min-width: 23px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            background: #fff;
+            cursor: pointer;
+            color: #333;
+        }
+        .icon-button.danger { color: #8b2525; }
+        .person-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .person-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 5px 4px 14px;
             min-height: 38px;
             background: #fafafa;
             color: #444;
             font-size: 13px;
         }
-        .resource::before { content: ''; width: 9px; height: 9px; border: 1px solid #777; background: white; }
         .timeline {
             position: relative;
             display: grid;
-            grid-template-columns: repeat(var(--days), 60px);
+            grid-column: 2 / -1;
+            grid-template-columns: repeat(var(--total-days), var(--day-width));
             min-height: 38px;
-            background: repeating-linear-gradient(to right, transparent 0, transparent 59px, #ddd 59px, #ddd 60px), #fff;
+            background: repeating-linear-gradient(to right, transparent 0 calc(var(--day-width) - 1px), #ddd calc(var(--day-width) - 1px) var(--day-width)), #fff;
             border-bottom: 1px solid #ccc;
         }
         .timeline:hover { background-color: #fcfdff; }
+        .timeline.drag-over { outline: 2px solid #2563a6; outline-offset: -2px; }
         .event {
             align-self: stretch;
             position: relative;
+            grid-row: 1;
             z-index: 1;
             display: flex;
             align-items: flex-start;
@@ -109,8 +153,9 @@
             font-size: 12px;
             white-space: nowrap;
             text-overflow: ellipsis;
-            cursor: pointer;
+            cursor: grab;
         }
+        .event:active { cursor: grabbing; }
         .event:hover { filter: brightness(.96); z-index: 2; }
         .event.orange { background: #fff0cf; border-color: #efaa42; }
         .event.green { background: #dff2e2; border-color: #69b578; }
@@ -125,13 +170,13 @@
         .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
         .dialog-actions button { padding: 8px 12px; border: 1px solid #aaa; border-radius: 4px; background: #f7f7f7; cursor: pointer; }
         .dialog-actions .primary { color: white; background: #2563a6; border-color: #2563a6; }
+        .dialog-actions .danger { margin-right: auto; color: #8b2525; }
 
         @@media (max-width: 600px) {
             .app { margin: 8px auto; padding: 0 8px; }
             .toolbar { align-items: flex-start; flex-direction: column; }
             .toolbar-actions { width: 100%; justify-content: space-between; }
-            .grid-row { grid-template-columns: 160px repeat(var(--days), 54px); }
-            .timeline { grid-template-columns: repeat(var(--days), 54px); background-size: 54px 100%; }
+            .grid-row { grid-template-columns: 160px repeat(var(--total-days), var(--day-width)); }
         }
     </style>
 </head>
@@ -144,180 +189,475 @@
                 <span id="monthLabel" aria-live="polite"></span>
                 <button id="nextMonth" type="button" aria-label="Następny miesiąc">›</button>
                 <button id="todayButton" type="button">Dzisiaj</button>
+                <label class="view-control" for="monthCount">Miesiące
+                    <input id="monthCount" type="range" min="1" max="12" value="1" />
+                    <output id="monthCountLabel" for="monthCount">1 miesiąc</output>
+                </label>
+                <label class="view-control" for="scaleControl">Skala
+                    <input id="scaleControl" type="range" min="25" max="100" step="5" value="100" />
+                    <output id="scaleLabel" for="scaleControl">100%</output>
+                </label>
                 <button id="addEventButton" type="button">+ Dodaj wydarzenie</button>
             </div>
         </header>
         <div class="scroll-frame">
             <div id="scheduler" aria-label="Kalendarz wydarzeń"></div>
         </div>
-        <p class="hint">Kliknij wolne pole, aby dodać wydarzenie. Kliknij wydarzenie, aby zobaczyć szczegóły. Przewijaj poziomo, aby zobaczyć kolejne dni.</p>
+        <p class="hint">Przyciskami przy projektach i osobach zarządzaj ich nazwami oraz zawartością. Kliknij wydarzenie, aby je edytować lub usunąć; przeciągnij je na inny dzień lub do innej osoby, aby je przenieść. Dwukrotnie kliknij wolne pole, aby dodać wydarzenie.</p>
     </main>
 
     <dialog id="eventDialog">
         <form id="eventForm">
-            <h2>Dodaj wydarzenie</h2>
+            <h2 id="eventDialogTitle">Dodaj wydarzenie</h2>
             <label class="form-field">Nazwa wydarzenia
                 <input id="eventTitle" name="title" required maxlength="60" placeholder="Np. Spotkanie zespołu" />
             </label>
-            <label class="form-field">Zasób
-                <select id="eventResource" name="resource"></select>
+            <label class="form-field">Osoba
+                <select id="eventPerson" name="person"></select>
             </label>
             <label class="form-field">Data
                 <input id="eventDate" name="date" type="date" required />
             </label>
             <label class="form-field">Liczba dni
-                <input id="eventDuration" name="duration" type="number" min="1" max="31" value="1" required />
+                <input id="eventDuration" name="duration" type="number" min="1" max="365" value="1" required />
             </label>
             <div class="dialog-actions">
+                <button id="deleteEvent" class="danger" type="button" hidden>Usuń wydarzenie</button>
                 <button id="cancelEvent" type="button">Anuluj</button>
                 <button class="primary" type="submit">Zapisz wydarzenie</button>
             </div>
         </form>
     </dialog>
 
+    <dialog id="nameDialog">
+        <form id="nameForm">
+            <h2 id="nameDialogTitle">Nazwa</h2>
+            <label class="form-field" for="entityName">
+                <span id="entityNameLabel">Nazwa</span>
+                <input id="entityName" name="name" required maxlength="60" />
+            </label>
+            <div class="dialog-actions">
+                <button id="cancelName" type="button">Anuluj</button>
+                <button id="saveName" class="primary" type="submit">Zapisz</button>
+            </div>
+        </form>
+    </dialog>
+
     <script>
         (() => {
-            const resources = [
-                { id: 'room1', name: 'Room 1', group: 'Locations' },
-                { id: 'room2', name: 'Room 2', group: 'Locations' },
-                { id: 'room3', name: 'Room 3', group: 'Locations' },
-                { id: 'room4', name: 'Room 4', group: 'Locations' },
-                { id: 'person1', name: 'Person 1', group: 'People' },
-                { id: 'person2', name: 'Person 2', group: 'People' },
-                { id: 'person3', name: 'Person 3', group: 'People' },
-                { id: 'person4', name: 'Person 4', group: 'People' }
+            const now = new Date();
+            let visibleMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            let visibleMonthCount = 1;
+            const projects = [
+                {
+                    id: 'project-1',
+                    name: 'Project 1',
+                    people: [
+                        { id: 'person-1', name: 'Person 1', events: [{ id: 'event-1', title: 'Event 1', date: makeDateString(now.getFullYear(), now.getMonth(), 2), span: 2 }] },
+                        { id: 'person-2', name: 'Person 2', events: [{ id: 'event-2', title: 'Event 2', date: makeDateString(now.getFullYear(), now.getMonth(), 5), span: 2 }] }
+                    ]
+                },
+                {
+                    id: 'project-2',
+                    name: 'Project 2',
+                    people: [
+                        { id: 'person-3', name: 'Person 3', events: [{ id: 'event-3', title: 'Event 3', date: makeDateString(now.getFullYear(), now.getMonth(), 9), span: 2 }] },
+                        { id: 'person-4', name: 'Person 4', events: [{ id: 'event-4', title: 'Event 4', date: makeDateString(now.getFullYear(), now.getMonth(), 13), span: 2 }] }
+                    ]
+                }
             ];
-            let events = [
-                { resource: 'room1', day: 2, span: 2, title: 'Event 1' },
-                { resource: 'room1', day: 4, span: 3, title: 'Event 15', color: 'orange' },
-                { resource: 'room2', day: 2, span: 2, title: 'Event 2' },
-                { resource: 'room2', day: 4, span: 2, title: 'Event 16' },
-                { resource: 'room3', day: 4, span: 2, title: 'Event 3' },
-                { resource: 'room3', day: 6, span: 2, title: 'Event 17', color: 'green' },
-                { resource: 'room4', day: 2, span: 2, title: 'Sales Department' },
-                { resource: 'person1', day: 2, span: 2, title: 'Event 4' },
-                { resource: 'person2', day: 2, span: 2, title: 'Event 6' },
-                { resource: 'person3', day: 1, span: 2, title: 'Event 8' },
-                { resource: 'person4', day: 29, span: 2, title: 'Event 9' }
-            ];
-            let visibleMonth = new Date();
             const scheduler = document.getElementById('scheduler');
             const monthLabel = document.getElementById('monthLabel');
+            const monthCount = document.getElementById('monthCount');
+            const monthCountLabel = document.getElementById('monthCountLabel');
+            const scaleControl = document.getElementById('scaleControl');
+            const scaleLabel = document.getElementById('scaleLabel');
             const dialog = document.getElementById('eventDialog');
             const form = document.getElementById('eventForm');
+            const eventTitle = document.getElementById('eventTitle');
             const dateInput = document.getElementById('eventDate');
-            const resourceSelect = document.getElementById('eventResource');
-            const collapsedGroups = new Set();
+            const personSelect = document.getElementById('eventPerson');
+            const eventDialogTitle = document.getElementById('eventDialogTitle');
+            const deleteEventButton = document.getElementById('deleteEvent');
+            const nameDialog = document.getElementById('nameDialog');
+            const nameForm = document.getElementById('nameForm');
+            const entityName = document.getElementById('entityName');
+            const nameDialogTitle = document.getElementById('nameDialogTitle');
+            const entityNameLabel = document.getElementById('entityNameLabel');
+            const saveNameButton = document.getElementById('saveName');
+            const collapsedProjects = new Set();
+            let projectsCollapsed = false;
+            let entityBeingEdited = null;
+            let eventBeingEdited = null;
+            let draggedEvent = null;
 
-            resources.forEach(resource => {
-                const option = document.createElement('option');
-                option.value = resource.id;
-                option.textContent = `${resource.group} — ${resource.name}`;
-                resourceSelect.append(option);
-            });
+            function makeDateString(year, month, day) {
+                const lastDay = new Date(year, month + 1, 0).getDate();
+                return `${year}-${String(month + 1).padStart(2, '0')}-${String(Math.min(day, lastDay)).padStart(2, '0')}`;
+            }
+
+            function createButton(className, text, label, onClick) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = className;
+                button.textContent = text;
+                button.title = label;
+                button.setAttribute('aria-label', label);
+                button.addEventListener('click', onClick);
+                return button;
+            }
+
+            function findPerson(personId) {
+                for (const project of projects) {
+                    const person = project.people.find(item => item.id === personId);
+                    if (person) return { project, person };
+                }
+                return null;
+            }
+
+            function updatePersonOptions(selectedId) {
+                personSelect.replaceChildren();
+                projects.forEach(project => {
+                    project.people.forEach(person => {
+                        const option = document.createElement('option');
+                        option.value = person.id;
+                        option.textContent = `${project.name} — ${person.name}`;
+                        personSelect.append(option);
+                    });
+                });
+                if (selectedId && findPerson(selectedId)) personSelect.value = selectedId;
+                const hasPeople = personSelect.options.length > 0;
+                form.querySelector('button[type="submit"]').disabled = !hasPeople;
+                document.getElementById('addEventButton').disabled = !hasPeople;
+            }
 
             function render() {
                 const year = visibleMonth.getFullYear();
                 const month = visibleMonth.getMonth();
-                const days = new Date(year, month + 1, 0).getDate();
-                const monthName = new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric' }).format(visibleMonth);
-                monthLabel.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-                scheduler.style.setProperty('--days', days);
+                const months = Array.from({ length: visibleMonthCount }, (_, index) => new Date(year, month + index, 1));
+                const totalDays = months.reduce((total, date) => total + new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(), 0);
+                const dayWidth = `${60 * Number(scaleControl.value) / 100}px`;
+                const formatMonth = date => {
+                    const name = new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric' }).format(date);
+                    return name.charAt(0).toUpperCase() + name.slice(1);
+                };
+                const firstMonth = formatMonth(months[0]);
+                const lastMonth = formatMonth(months[months.length - 1]);
+                monthLabel.textContent = months.length === 1 ? firstMonth : `${firstMonth} – ${lastMonth}`;
+                monthCountLabel.textContent = `${visibleMonthCount} ${visibleMonthCount === 1 ? 'miesiąc' : visibleMonthCount < 5 ? 'miesiące' : 'miesięcy'}`;
+                scaleLabel.textContent = `${scaleControl.value}%`;
+                scheduler.style.setProperty('--total-days', totalDays);
+                scheduler.style.setProperty('--day-width', dayWidth);
                 scheduler.replaceChildren();
+
+                const monthHeader = document.createElement('div');
+                monthHeader.className = 'grid-row';
+                monthHeader.innerHTML = '<div class="corner" aria-hidden="true"></div>';
+                months.forEach(date => {
+                    const cell = document.createElement('div');
+                    cell.className = 'month-head';
+                    cell.style.gridColumn = `span ${new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()}`;
+                    cell.textContent = formatMonth(date);
+                    monthHeader.append(cell);
+                });
+                scheduler.append(monthHeader);
 
                 const dayHeader = document.createElement('div');
                 dayHeader.className = 'grid-row';
                 dayHeader.innerHTML = '<div class="corner" aria-hidden="true"></div>';
-                for (let day = 1; day <= days; day++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'day-head';
-                    cell.textContent = day;
-                    dayHeader.append(cell);
-                }
-                scheduler.append(dayHeader);
-
-                const welcome = document.createElement('div');
-                welcome.className = 'grid-row';
-                welcome.innerHTML = '<div class="welcome-label"></div><div class="welcome">Welcome!</div>';
-                scheduler.append(welcome);
-
-                let currentGroup = '';
-                resources.forEach(resource => {
-                    if (resource.group !== currentGroup) {
-                        currentGroup = resource.group;
-                        const groupRow = document.createElement('div');
-                        groupRow.className = 'grid-row';
-                        const groupName = document.createElement('div');
-                        groupName.className = `group-name${collapsedGroups.has(currentGroup) ? ' collapsed' : ''}`;
-                        groupName.textContent = currentGroup;
-                        groupName.setAttribute('role', 'button');
-                        groupName.tabIndex = 0;
-                        groupName.setAttribute('aria-expanded', String(!collapsedGroups.has(currentGroup)));
-                        groupName.addEventListener('click', () => toggleGroup(currentGroup));
-                        groupName.addEventListener('keydown', event => {
-                            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleGroup(currentGroup); }
-                        });
-                        const fill = document.createElement('div');
-                        fill.className = 'group-fill';
-                        groupRow.append(groupName, fill);
-                        scheduler.append(groupRow);
-                    }
-                    if (collapsedGroups.has(resource.group)) return;
-
-                    const row = document.createElement('div');
-                    row.className = 'grid-row';
-                    const label = document.createElement('div');
-                    label.className = 'resource';
-                    label.textContent = resource.name;
-                    const timeline = document.createElement('div');
-                    timeline.className = 'timeline';
-                    timeline.style.gridTemplateColumns = `repeat(${days}, 60px)`;
-                    timeline.setAttribute('aria-label', `${resource.name}, ${monthName}`);
-
+                months.forEach(date => {
+                    const days = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
                     for (let day = 1; day <= days; day++) {
                         const cell = document.createElement('div');
-                        cell.className = 'empty-cell';
-                        cell.style.gridColumn = String(day);
-                        cell.title = `Dodaj wydarzenie: ${resource.name}, ${day} ${monthName}`;
-                        cell.addEventListener('dblclick', () => openDialog(resource.id, day));
-                        timeline.append(cell);
+                        cell.className = 'day-head';
+                        cell.textContent = day;
+                        dayHeader.append(cell);
                     }
-                    events.filter(item => item.resource === resource.id && item.day <= days).forEach(item => {
-                        const event = document.createElement('button');
-                        event.type = 'button';
-                        event.className = `event${item.color ? ` ${item.color}` : ''}`;
-                        event.style.gridColumn = `${item.day} / ${Math.min(days + 1, item.day + item.span)}`;
-                        event.textContent = item.title;
-                        event.title = `${item.title} — ${resource.name}, dzień ${item.day}`;
-                        event.setAttribute('aria-label', event.title);
-                        event.addEventListener('click', () => window.alert(`${item.title}\n${resource.name}\nDzień ${item.day}`));
-                        timeline.append(event);
-                    });
-                    row.append(label, timeline);
-                    scheduler.append(row);
                 });
+                scheduler.append(dayHeader);
+
+                const visibleDates = [];
+                months.forEach(date => {
+                    const days = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+                    for (let day = 1; day <= days; day++) {
+                        visibleDates.push(new Date(date.getFullYear(), date.getMonth(), day));
+                    }
+                });
+
+                const groupRow = document.createElement('div');
+                groupRow.className = 'grid-row';
+                const groupName = document.createElement('div');
+                groupName.className = 'group-name';
+                const groupToggle = createButton(`group-toggle${projectsCollapsed ? ' collapsed' : ''}`, 'Projects', 'Zwiń lub rozwiń listę projektów', () => {
+                    projectsCollapsed = !projectsCollapsed;
+                    render();
+                });
+                groupToggle.setAttribute('aria-expanded', String(!projectsCollapsed));
+                const addProjectButton = createButton('icon-button', '+', 'Dodaj projekt', () => openNameDialog('project'));
+                groupName.append(groupToggle, addProjectButton);
+                const groupFill = document.createElement('div');
+                groupFill.className = 'group-fill';
+                groupRow.append(groupName, groupFill);
+                scheduler.append(groupRow);
+
+                if (!projectsCollapsed) {
+                    projects.forEach(project => {
+                        const projectRow = document.createElement('div');
+                        projectRow.className = 'grid-row';
+                        const projectLabel = document.createElement('div');
+                        projectLabel.className = 'project-heading';
+                        const projectToggle = createButton(`project-toggle${collapsedProjects.has(project.id) ? ' collapsed' : ''}`, project.name, `Zwiń lub rozwiń ${project.name}`, () => toggleProject(project.id));
+                        projectToggle.setAttribute('aria-expanded', String(!collapsedProjects.has(project.id)));
+                        const actions = document.createElement('div');
+                        actions.className = 'entity-actions';
+                        actions.append(
+                            createButton('icon-button', '+', `Dodaj osobę do ${project.name}`, () => openNameDialog('person', project)),
+                            createButton('icon-button', '✎', `Zmień nazwę projektu ${project.name}`, () => openNameDialog('project', project)),
+                            createButton('icon-button danger', '×', `Usuń projekt ${project.name}`, () => removeProject(project))
+                        );
+                        projectLabel.append(projectToggle, actions);
+                        const projectFill = document.createElement('div');
+                        projectFill.className = 'project-fill';
+                        projectRow.append(projectLabel, projectFill);
+                        scheduler.append(projectRow);
+
+                        if (collapsedProjects.has(project.id)) return;
+                        project.people.forEach(person => {
+                            const row = document.createElement('div');
+                            row.className = 'grid-row';
+                            const label = document.createElement('div');
+                            label.className = 'person-label';
+                            const name = document.createElement('span');
+                            name.className = 'person-name';
+                            name.textContent = person.name;
+                            const personActions = document.createElement('div');
+                            personActions.className = 'entity-actions';
+                            personActions.append(
+                                createButton('icon-button', '+', `Dodaj wydarzenie dla ${person.name}`, () => openEventDialog(person.id)),
+                                createButton('icon-button', '✎', `Zmień nazwę osoby ${person.name}`, () => openNameDialog('person', project, person)),
+                                createButton('icon-button danger', '×', `Usuń osobę ${person.name}`, () => removePerson(project, person))
+                            );
+                            label.append(name, personActions);
+
+                            const timeline = document.createElement('div');
+                            timeline.className = 'timeline';
+                            timeline.setAttribute('aria-label', `${project.name} — ${person.name}, ${monthLabel.textContent}`);
+                            timeline.addEventListener('dragover', event => {
+                                if (!draggedEvent) return;
+                                event.preventDefault();
+                                event.dataTransfer.dropEffect = 'move';
+                                timeline.classList.add('drag-over');
+                            });
+                            timeline.addEventListener('dragleave', event => {
+                                if (!timeline.contains(event.relatedTarget)) timeline.classList.remove('drag-over');
+                            });
+                            timeline.addEventListener('drop', event => {
+                                event.preventDefault();
+                                timeline.classList.remove('drag-over');
+                                if (!draggedEvent) return;
+                                const drag = draggedEvent;
+                                draggedEvent = null;
+                                const dayWidth = Number.parseFloat(getComputedStyle(scheduler).getPropertyValue('--day-width'));
+                                const localX = event.clientX - timeline.getBoundingClientRect().left;
+                                const dayIndex = Math.max(0, Math.min(visibleDates.length - 1, Math.floor(localX / dayWidth)));
+                                moveEvent(drag, person.id, visibleDates[dayIndex]);
+                            });
+                            visibleDates.forEach((date, index) => {
+                                const cell = document.createElement('div');
+                                cell.className = 'empty-cell';
+                                cell.style.gridColumn = String(index + 1);
+                                cell.title = `Dodaj wydarzenie: ${person.name}, ${date.getDate()} ${formatMonth(date)}`;
+                                cell.addEventListener('dblclick', () => openEventDialog(person.id, date));
+                                timeline.append(cell);
+                            });
+
+                            const rangeStart = visibleDates[0];
+                            const rangeEnd = new Date(visibleDates[visibleDates.length - 1].getFullYear(), visibleDates[visibleDates.length - 1].getMonth(), visibleDates[visibleDates.length - 1].getDate() + 1);
+                            person.events.forEach(item => {
+                                const eventStart = new Date(`${item.date}T00:00:00`);
+                                const eventEnd = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate() + item.span);
+                                if (eventStart >= rangeEnd || eventEnd <= rangeStart) return;
+                                const startOffset = Math.max(0, Math.round((eventStart - rangeStart) / 86400000));
+                                const endOffset = Math.min(totalDays, Math.round((eventEnd - rangeStart) / 86400000));
+                                const eventButton = createButton(`event${item.color ? ` ${item.color}` : ''}`, item.title, `${item.title} — ${person.name}, ${item.date}`, () => openEventDialog(person.id, null, item));
+                                eventButton.draggable = true;
+                                eventButton.addEventListener('dragstart', event => {
+                                    draggedEvent = { personId: person.id, eventId: item.id };
+                                    event.dataTransfer.effectAllowed = 'move';
+                                    event.dataTransfer.setData('text/plain', item.id);
+                                });
+                                eventButton.addEventListener('dragend', () => {
+                                    draggedEvent = null;
+                                    scheduler.querySelectorAll('.timeline.drag-over').forEach(target => target.classList.remove('drag-over'));
+                                });
+                                eventButton.style.gridColumn = `${startOffset + 1} / ${endOffset + 1}`;
+                                timeline.append(eventButton);
+                            });
+                            row.append(label, timeline);
+                            scheduler.append(row);
+                        });
+                    });
+                }
             }
 
-            function toggleGroup(group) {
-                if (collapsedGroups.has(group)) collapsedGroups.delete(group);
-                else collapsedGroups.add(group);
+            function toggleProject(projectId) {
+                if (collapsedProjects.has(projectId)) collapsedProjects.delete(projectId);
+                else collapsedProjects.add(projectId);
                 render();
             }
 
-            function openDialog(resourceId, day) {
-                const year = visibleMonth.getFullYear();
-                const month = String(visibleMonth.getMonth() + 1).padStart(2, '0');
-                const selectedDay = String(day || 1).padStart(2, '0');
-                dateInput.value = `${year}-${month}-${selectedDay}`;
-                if (resourceId) resourceSelect.value = resourceId;
-                form.reset();
-                dateInput.value = `${year}-${month}-${selectedDay}`;
-                if (resourceId) resourceSelect.value = resourceId;
-                document.getElementById('eventDuration').value = 1;
-                dialog.showModal();
-                document.getElementById('eventTitle').focus();
+            function moveEvent(drag, targetPersonId, targetDate) {
+                const source = findPerson(drag.personId);
+                const target = findPerson(targetPersonId);
+                if (!source || !target) return;
+                const item = source.person.events.find(event => event.id === drag.eventId);
+                if (!item) return;
+                const date = makeDateString(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+                if (source.person.id === target.person.id && item.date === date) return;
+                if (source.person.id !== target.person.id) {
+                    source.person.events = source.person.events.filter(event => event.id !== item.id);
+                    target.person.events.push(item);
+                }
+                item.date = date;
+                render();
             }
 
+            function openNameDialog(type, project = null, person = null) {
+                const isEdit = Boolean(person || (type === 'project' && project));
+                entityBeingEdited = { type, project, person, isEdit };
+                entityName.value = isEdit ? (type === 'project' ? project.name : person.name) : '';
+                entityName.setCustomValidity('');
+                entityNameLabel.textContent = type === 'project' ? 'Nazwa projektu' : 'Nazwa osoby';
+                nameDialogTitle.textContent = `${isEdit ? 'Zmień nazwę' : 'Dodaj'} ${type === 'project' ? 'projekt' : 'osobę'}`;
+                saveNameButton.textContent = isEdit ? 'Zapisz nazwę' : 'Dodaj';
+                nameDialog.showModal();
+                entityName.focus();
+                if (isEdit) entityName.select();
+            }
+
+            function removeProject(project) {
+                if (!window.confirm(`Usunąć projekt „${project.name}”, wszystkie osoby i ich wydarzenia?`)) return;
+                const index = projects.findIndex(item => item.id === project.id);
+                if (index !== -1) projects.splice(index, 1);
+                collapsedProjects.delete(project.id);
+                updatePersonOptions();
+                render();
+            }
+
+            function removePerson(project, person) {
+                if (!window.confirm(`Usunąć osobę „${person.name}” wraz z jej wydarzeniami?`)) return;
+                project.people = project.people.filter(item => item.id !== person.id);
+                updatePersonOptions();
+                render();
+            }
+
+            function openEventDialog(personId = null, date = null, item = null) {
+                if (!personSelect.options.length) return;
+                form.reset();
+                eventBeingEdited = item ? { personId, item } : null;
+                updatePersonOptions(personId);
+                eventDialogTitle.textContent = item ? 'Edytuj wydarzenie' : 'Dodaj wydarzenie';
+                deleteEventButton.hidden = !item;
+                eventTitle.setCustomValidity('');
+                eventTitle.value = item ? item.title : '';
+                const selectedDate = date || (item ? new Date(`${item.date}T00:00:00`) : visibleMonth);
+                dateInput.value = makeDateString(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                document.getElementById('eventDuration').value = item ? item.span : 1;
+                dialog.showModal();
+                eventTitle.focus();
+                if (!item) eventTitle.select();
+            }
+
+            function submitEvent(event) {
+                event.preventDefault();
+                const title = eventTitle.value.trim();
+                if (!title) {
+                    eventTitle.setCustomValidity('Wpisz nazwę wydarzenia.');
+                    eventTitle.reportValidity();
+                    return;
+                }
+                const selectedPerson = findPerson(personSelect.value);
+                if (!selectedPerson) return;
+                const selectedDate = new Date(`${dateInput.value}T00:00:00`);
+                if (Number.isNaN(selectedDate.getTime())) return;
+                const details = {
+                    title,
+                    date: makeDateString(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()),
+                    span: Math.max(1, Number(document.getElementById('eventDuration').value) || 1)
+                };
+                if (eventBeingEdited) {
+                    const originalPerson = findPerson(eventBeingEdited.personId);
+                    if (!originalPerson) return;
+                    const currentEvent = originalPerson.person.events.find(item => item.id === eventBeingEdited.item.id);
+                    if (!currentEvent) return;
+                    Object.assign(currentEvent, details);
+                    if (originalPerson.person.id !== selectedPerson.person.id) {
+                        originalPerson.person.events = originalPerson.person.events.filter(item => item.id !== currentEvent.id);
+                        selectedPerson.person.events.push(currentEvent);
+                    }
+                } else {
+                    selectedPerson.person.events.push({ id: crypto.randomUUID(), ...details });
+                }
+                visibleMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                eventBeingEdited = null;
+                dialog.close();
+                render();
+            }
+
+            function removeEvent() {
+                if (!eventBeingEdited) return;
+                const owner = findPerson(eventBeingEdited.personId);
+                if (!owner) return;
+                if (!window.confirm(`Usunąć wydarzenie „${eventBeingEdited.item.title}”?`)) return;
+                owner.person.events = owner.person.events.filter(item => item.id !== eventBeingEdited.item.id);
+                eventBeingEdited = null;
+                dialog.close();
+                render();
+            }
+
+            nameForm.addEventListener('submit', event => {
+                event.preventDefault();
+                if (!entityBeingEdited) return;
+                const name = entityName.value.trim();
+                if (!name) {
+                    entityName.setCustomValidity('Wpisz nazwę.');
+                    entityName.reportValidity();
+                    return;
+                }
+                const { type, project, person, isEdit } = entityBeingEdited;
+                const siblings = type === 'project' ? projects : project.people;
+                const current = type === 'project' ? project : person;
+                if (siblings.some(item => item !== current && item.name.toLocaleLowerCase('pl-PL') === name.toLocaleLowerCase('pl-PL'))) {
+                    entityName.setCustomValidity(`Ta nazwa ${type === 'project' ? 'projektu' : 'osoby'} jest już używana.`);
+                    entityName.reportValidity();
+                    return;
+                }
+                if (isEdit) {
+                    current.name = name;
+                } else if (type === 'project') {
+                    projects.push({ id: crypto.randomUUID(), name, people: [] });
+                } else {
+                    project.people.push({ id: crypto.randomUUID(), name, events: [] });
+                }
+                entityBeingEdited = null;
+                nameDialog.close();
+                updatePersonOptions();
+                render();
+            });
+
+            entityName.addEventListener('input', () => entityName.setCustomValidity(''));
+            eventTitle.addEventListener('input', () => eventTitle.setCustomValidity(''));
+            form.addEventListener('submit', submitEvent);
+            deleteEventButton.addEventListener('click', removeEvent);
+            document.getElementById('cancelEvent').addEventListener('click', () => {
+                eventBeingEdited = null;
+                dialog.close();
+            });
+            document.getElementById('cancelName').addEventListener('click', () => {
+                entityBeingEdited = null;
+                nameDialog.close();
+            });
+            document.getElementById('addEventButton').addEventListener('click', () => openEventDialog(null, visibleMonth));
             document.getElementById('previousMonth').addEventListener('click', () => {
                 visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
                 render();
@@ -327,23 +667,17 @@
                 render();
             });
             document.getElementById('todayButton').addEventListener('click', () => {
-                visibleMonth = new Date();
+                const today = new Date();
+                visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                 render();
             });
-            document.getElementById('addEventButton').addEventListener('click', () => openDialog(null, 1));
-            document.getElementById('cancelEvent').addEventListener('click', () => dialog.close());
-            form.addEventListener('submit', event => {
-                event.preventDefault();
-                const selectedDate = new Date(`${dateInput.value}T00:00:00`);
-                if (Number.isNaN(selectedDate.getTime())) return;
-                const day = selectedDate.getDate();
-                const duration = Math.max(1, Number(document.getElementById('eventDuration').value) || 1);
-                events.push({ resource: resourceSelect.value, day, span: duration, title: document.getElementById('eventTitle').value.trim() });
-                visibleMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-                dialog.close();
+            monthCount.addEventListener('input', () => {
+                visibleMonthCount = Number(monthCount.value);
                 render();
             });
+            scaleControl.addEventListener('input', render);
 
+            updatePersonOptions();
             render();
         })();
     </script>
